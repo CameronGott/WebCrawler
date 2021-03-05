@@ -217,6 +217,28 @@ public class Crawler {
 }
 /*
  * ******* NOTES *******
+ * 
+ * 03/04/2021
+ * Next feature is going to be parsing HTML for keywords.
+ * We'll use Jsoup to grap HTML, turn it into STring, then use one of
+ *  many libraries to parse String text. 
+ *  
+ * Apache Lucene looks promising. 
+ * https://lucene.apache.org/
+ * 
+ * Relevant SO post
+ * https://stackoverflow.com/questions/30992731/finding-the-count-of-a-keyword-in-html-using-jsoup
+ * 
+ * Architecture:
+ * On first thought, the easiest way to plug this into the existing
+ * program is to insert the scraping code around our link-parsing code.
+ * Optionally, if we want to provide the user a choice of whether to scrape while
+ * crawling we can set up a command line argument to decide whether or not to 
+ * scrape while crawling.
+ * 
+ * This would be useful in cases where we want to crawl really fast / efficiently
+ * and don't want to be slowed down by any scraping / keyword hunting / indexing.
+ * 
  * 03/03/2021
  * So today I got https links to parse correctly. That was fun. Not too difficult.
  * But I noticed a lot of errors when making requests to https links on news.ycombinator.com

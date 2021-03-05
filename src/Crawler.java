@@ -4,19 +4,24 @@
  * Initial version pulled from Introduction to Java Programming by Y. Daniel Liang
  * 02/27/2021
  * 
- * and modified by Cameron Gott.
+ * and developed by Cameron Gott.
  * 
  * 
  * ******* FEATURES *******
- * -notify user of waiting URL requests greater than 3 seconds
- * -notify users of request statuses as they happen
- * 
+ * -scrape more information from each site (Jsoup will help here)
+ * -tree structure search - crawl subsequently discovered URLs
+ * -clean up duplicate URLs in traversedURLs file
+ * -setup command line argument support
+ * -multi-threading support for crawling
+ * -multi-thread file clean-up
+ * -use Jsoup to parse HTML, start building a list of keywords
  * -store history of searched URLs in file
  * -store history of searched URLs in database
  * -check input URL against stored history
  * -store URL results in a database
- * -scrape more information from each site
- * -tree structure search - crawl subsequently discovered URLs
+ * -notify user of waiting URL requests greater than 3 seconds
+ * -notify users of request statuses as they happen
+ * 
  * 
  *  ******* FINISHED FEATURES *******
  *  -store URL results in a file
@@ -30,6 +35,7 @@
  * -program now writes traversed URLs to file
  * -added support for parsing https links
  * -replaced Scanner with BufferedReader
+ * -initial GitHub commit
  * 
  * 02/27/2021
  * -added termination message
@@ -241,6 +247,14 @@ public class Crawler {
  * the HTTP protocol because there is some handshaking between me and the endpoint,
  * so that's why the HTTP version of this crawler was able
  * to be so simple and use so little code. 
+ * 
+ * Added project to GitHub. 
+ * Git commands so I don't forget for the tenth time.
+ * Pull up Git CMD (if I'm on my Windows 7 machine)
+ * 
+ * git add (any new files I have)
+ * git commit -m "commit message"
+ * git push -u origin master
  * 
  * 
  * 

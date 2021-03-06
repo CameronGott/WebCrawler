@@ -8,6 +8,7 @@
  * 
  * 
  * ******* FEATURES *******
+ * -abort requests / parsing longer than X amount of time
  * -scrape more information from each site (Jsoup will help here)
  * -tree structure search - crawl subsequently discovered URLs
  * -clean up duplicate URLs in traversedURLs file
@@ -36,6 +37,8 @@
  * ******* CHANGE LOG *******
  * 03/05/2021
  * -started building user mode selection (crawl versus cleanup versus index etc)
+ * -building file mode for crawler (reading URLs to crawl from file storage)
+ * 
  * 03/03/2021
  * -added Jsoup to project
  * -program now writes traversed URLs to file
@@ -50,8 +53,11 @@
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.io.FileWriter;
@@ -63,7 +69,7 @@ public class Crawler {
 
 	public static void main(String[] args) {
 		Scanner input = new Scanner(System.in);
-		System.out.println("Press 'c' for crawl mode:");
+		System.out.println("Press 'c' for manual URL crawl mode; f for file URL crawl mode: ");
 		char userMode = input.nextLine().toCharArray()[0];
 		if(userMode == 'c')
 		{
@@ -72,6 +78,10 @@ public class Crawler {
 			String url = input.nextLine();
 			
 			crawler(url);
+		}
+		else if(userMode == 'f')
+		{
+			fileCrawler();
 		}
 		
 		
@@ -92,8 +102,17 @@ public class Crawler {
 				listOfTraversedURLs.add(urlString);
 				System.out.println("Crawl: " + urlString);
 			}
+			if(urlString.contains("akamai.com"))
+			{
+				System.out.println("Parsing akamai url. Beginning bug hunt.\nBuilding arraylist of subURLs...");
+			}
 			
-			for(String s : getSubURLs(urlString))
+			ArrayList<String> subURLsFromPage = getSubURLs(urlString);
+			if(urlString.contains("akamai.com"))
+			{
+				System.out.println("ArrayList of subURLs from akamai built successfully. Continuing...");
+			}
+			for(String s : subURLsFromPage)
 			{
 				if(!listOfTraversedURLs.contains(s))
 				{
@@ -107,8 +126,68 @@ public class Crawler {
 		writeTraversedURLsToFile(listOfTraversedURLs);
 	}
 	
+	public static void fileCrawler()
+	{
+		ArrayList<String> listOfPendingURLs = new ArrayList<>();
+		ArrayList<String> listOfTraversedURLs = new ArrayList<>();
+		try
+		{
+			File urlsToCrawl = new File("traversedFiles.txt");
+			BufferedReader reader = new BufferedReader(new FileReader(urlsToCrawl));
+			
+			//listOfPendingURLs.add(startingURL);
+			String currentLine;
+			try
+			{
+				while((currentLine = reader.readLine()) != null)
+				{
+					listOfPendingURLs.add(currentLine);
+				}
+			}
+			catch(IOException e)
+			{
+				System.out.println("An error ocurred in fileCrawler() function");
+				e.printStackTrace();
+			}
+			
+			
+			while(!listOfPendingURLs.isEmpty() && listOfTraversedURLs.size() <= 1000)
+			{
+				String urlString = listOfPendingURLs.remove(0);
+				if(!listOfTraversedURLs.contains(urlString))
+				{
+					listOfTraversedURLs.add(urlString);
+					System.out.println("Crawl: " + urlString);
+				}
+				
+				for(String s : getSubURLs(urlString))
+				{
+					
+					if(!listOfTraversedURLs.contains(s))
+					{
+						listOfPendingURLs.add(s);
+					}
+				}
+			}
+			System.out.println("Finished crawling file URLs.");
+			System.out.println("Traversed " + listOfTraversedURLs.size() + "URLs.");
+			System.out.println("Storing traversed URLs to file.");
+			writeTraversedURLsToFile(listOfTraversedURLs);
+		}
+		catch(FileNotFoundException e)
+		{
+			System.out.println("File not found. Oops you dun goofed.");
+		}
+		
+		
+	}
+	
 	public static ArrayList<String> getSubURLs(String urlString)
 	{
+		if(urlString.contains("akamai.com"))
+		{
+			System.out.println("entering getSubURLs");
+		}
 		ArrayList<String> list = new ArrayList<>();
 		
 		try
@@ -124,14 +203,47 @@ public class Crawler {
 			 */
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-			connection.connect();
+			try
+			{
+				/*
+				 * lots of connection attempts are taking a long time
+				 * and the long attempts usually correlate to non-interesting
+				 * URLs (like resources, images, cloud-based crap)
+				 * so we will set a timeout value to move on if its taking
+				 * too long to connect.
+				 */
+				connection.setConnectTimeout(5000);
+				connection.connect();
+				
+			}
+			catch(SocketTimeoutException e)
+			{
+				System.out.println("Socket Timeout Exception on last URL :(");
+			}
+			catch(IOException e)
+			{
+				System.out.println("IOException thrown :(");
+			}
+			if(urlString.contains("akamai.com"))
+			{
+				System.out.println("creating BufferedReader...");
+			}
+			
 			BufferedReader r  = new BufferedReader(
 					new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8")));
+			if(urlString.contains("akamai.com"))
+			{
+				System.out.println("BufferedReader created successfully. Reading first line...");
+			}
 			
 			String line = r.readLine();
 			int current = 0;
 			while(line != null)
 			{
+				if(urlString.contains("akamai.com"))
+				{
+					System.out.println("entering main parse while loop...");
+				}
 				//String line = input.nextLine();
 				// **************** to do ************
 				//add https link support
@@ -168,9 +280,15 @@ public class Crawler {
 						current = -1;
 					}
 				} //end while
+				if(urlString.contains("akamai.com"))
+				{
+					System.out.println("exiting loop iteration. Reading next line...");
+				}
 				line = r.readLine();
 			}//end while
 		}
+		
+		
 		catch(Exception ex)
 		{
 			System.out.println("Error: " + ex.getMessage());
@@ -231,7 +349,47 @@ public class Crawler {
 /*
  * ******* NOTES *******
  * 03/05/2021
- * Slept for one hour tonight. Not a very productive day today. 
+ * Slept for one hour tonight (last night). Not a very productive day today. 
+ * Nvm, 30 minutes later and 2 White Claws has me writing a lot of code.
+ * Time will tell if this code is of any use whatsoever.
+ * 
+ * Implemented connection timeout exception catching
+ * for those pesky URLs that take forever to connect and end up
+ * hanging up the crawler. Works pretty well! Crawl time improved by 500%.
+ * 
+ * So I'm running into a specific problem with an akamai URL hanging up.
+ * Exceptions for URLConnection aren't getting thrown. Task Manager
+ * says my CPU usage is ~3% so I'm probably not stuck in some infinite 
+ * parsing loop. Last line of console output I receive is Crawl: {akamai URL}
+ * so I'm starting the bug hunt there.
+ * I don't know where exactly in my code the hang-up is, so finding that
+ * problematic line is the first step.
+ * 
+ * Ok, so previously I was calling getSubURLs inside of a for-each loop to build
+ * the ArrayList<String> of subURLs. That was a bitch to test, so I pulled out the
+ * list building one line above the parsing for-each loop. About to test it now
+ * to see what the console spits out (yes I know I should be a big boy and use
+ * the debugger right now. But it's 11:15pm and I'm sleepy.)
+ * 
+ * So something interesting happened. Ive been testing on https://news.ycombinator.com
+ * and they added a new link. My program started to hang up on some SEC page but recovered 
+ * after maybe 10 seconds. Reaches the same problematic akamai url, only for the program to
+ * actually reach the point of building our ArrayList<String> from the returned page.
+ * 
+ * I guess there's a chance the building of the list is taking a long ass time
+ * without throwing up my CPU usage. I could confirm this by setting system
+ * timers and printing our their values, researching any known bottlenecks / slow behavior 
+ * of building ArrayList<String> from large inputs, etc etc. Might just let it 
+ * run for 10-20 minutes and see if it completes.
+ * 
+ * This is the point where I'm really regretting not using
+ * the debugger, cause I assume I could monitor the status of the arraylist build process
+ * through increasing memory usage, size of list, etc etc. Maybe if this run
+ * doesn't complete soon, I'll put on my big boy debugger pants.
+ * 
+ * No dice. Added some more good-ole console print statements and
+ * found the hangup where we create the BufferedReader. Wonder if the file
+ * size is too big for it to handle. Can implement a size check before creating? Maybe?
  * 
  * 03/04/2021
  * Next feature is going to be parsing HTML for keywords.

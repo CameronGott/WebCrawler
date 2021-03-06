@@ -56,9 +56,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
 import java.net.URLConnection;
+import java.net.UnknownServiceException;
 import java.nio.charset.Charset;
 import java.io.FileWriter;
 
@@ -228,9 +230,24 @@ public class Crawler {
 			{
 				System.out.println("creating BufferedReader...");
 			}
-			
+			//if akamai, construct big ass BufferedReader. Else, use default size
+			int readerSize = 100000;
+			if(urlString.contains("akamai.com"))
+			{
+				readerSize = Integer.MAX_VALUE - 1;
+			}
+			try
+			{
+				InputStream inputStream = connection.getInputStream();
+			}
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
 			BufferedReader r  = new BufferedReader(
-					new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8")));
+					///////////////////////////////////////////////////////////////////////////////////////////
+					new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8")), readerSize);
+			
 			if(urlString.contains("akamai.com"))
 			{
 				System.out.println("BufferedReader created successfully. Reading first line...");
@@ -390,6 +407,13 @@ public class Crawler {
  * No dice. Added some more good-ole console print statements and
  * found the hangup where we create the BufferedReader. Wonder if the file
  * size is too big for it to handle. Can implement a size check before creating? Maybe?
+ * 
+ * BufferedReader does in fact have a default size. If the page is bigger, might explain our issues.
+ * I will try making a big ass BR default size in the constructor and see what happens.
+ * 
+ * Integer.MAX_VALUE aint working. Might try a different stream reading method. 
+ * 
+ * 
  * 
  * 03/04/2021
  * Next feature is going to be parsing HTML for keywords.

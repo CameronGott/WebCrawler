@@ -99,28 +99,29 @@ public class Crawler {
 		while(!listOfPendingURLs.isEmpty() && listOfTraversedURLs.size() <= 100)
 		{
 			String urlString = listOfPendingURLs.remove(0);
-			if(!listOfTraversedURLs.contains(urlString))
+			if(!listOfTraversedURLs.contains(urlString) && !(urlString.contains("akamai")))
 			{
 				listOfTraversedURLs.add(urlString);
 				System.out.println("Crawl: " + urlString);
-			}
-			if(urlString.contains("akamai.com"))
-			{
-				System.out.println("Parsing akamai url. Beginning bug hunt.\nBuilding arraylist of subURLs...");
-			}
-			
-			ArrayList<String> subURLsFromPage = getSubURLs(urlString);
-			if(urlString.contains("akamai.com"))
-			{
-				System.out.println("ArrayList of subURLs from akamai built successfully. Continuing...");
-			}
-			for(String s : subURLsFromPage)
-			{
-				if(!listOfTraversedURLs.contains(s))
+				ArrayList<String> subURLsFromPage = getSubURLs(urlString);
+				if(urlString.contains("akamai.com"))
 				{
-					listOfPendingURLs.add(s);
+					System.out.println("ArrayList of subURLs from akamai built successfully. Continuing...");
+				}
+				for(String s : subURLsFromPage)
+				{
+					if(!listOfTraversedURLs.contains(s))
+					{
+						listOfPendingURLs.add(s);
+					}
 				}
 			}
+			/*if(urlString.contains("akamai.com"))
+			{
+				System.out.println("Parsing akamai url. Beginning bug hunt.\nBuilding arraylist of subURLs...");
+			}*/
+			
+			
 		}
 		System.out.println("Finished crawling.");
 		System.out.println("Traversed " + listOfTraversedURLs.size() + "URLs.");
@@ -413,6 +414,17 @@ public class Crawler {
  * 
  * Integer.MAX_VALUE aint working. Might try a different stream reading method. 
  * 
+ * After a little while, the final culprit is:
+ * InputStream inputStream = connection.getInputStream();
+ * Dunno why. Knowledge limited here. 
+ * Will proceed to ignore any URL with akamai.com in it.
+ * Probably shouldve moved on sooner. but it was good practice to 
+ * track this bug down. 
+ * 
+ * HOLY SHIT FINALLY got past this damn issue. 12:16AM March 6th 2021 wooooo!
+ * So satisfying. I code for these victories.
+ * Need to implement heavier URL filtering to save time. Start with ignoring www.w3.org
+ * domains.
  * 
  * 
  * 03/04/2021

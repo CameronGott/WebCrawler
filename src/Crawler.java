@@ -21,6 +21,10 @@
  * -store URL results in a database
  * -notify user of waiting URL requests greater than 3 seconds
  * -notify users of request statuses as they happen
+ * -allow user to interrupt long crawl sessions 
+ * 		(maybe multithreading to read keyboard input?)
+ * Start filtering out www.w3 domains (maybe use regex on url string before
+ *     making the request?)
  * 
  * 
  *  ******* FINISHED FEATURES *******
@@ -30,6 +34,8 @@
  *  -replaced Scanner with BufferedReader
  * 
  * ******* CHANGE LOG *******
+ * 03/05/2021
+ * -started building user mode selection (crawl versus cleanup versus index etc)
  * 03/03/2021
  * -added Jsoup to project
  * -program now writes traversed URLs to file
@@ -57,10 +63,17 @@ public class Crawler {
 
 	public static void main(String[] args) {
 		Scanner input = new Scanner(System.in);
-		System.out.println("Enter a URL: ");
-		String url = input.nextLine();
+		System.out.println("Press 'c' for crawl mode:");
+		char userMode = input.nextLine().toCharArray()[0];
+		if(userMode == 'c')
+		{
+			//input.close
+			System.out.println("Enter a URL: ");
+			String url = input.nextLine();
+			
+			crawler(url);
+		}
 		
-		crawler(url);
 		
 
 	}
@@ -217,6 +230,8 @@ public class Crawler {
 }
 /*
  * ******* NOTES *******
+ * 03/05/2021
+ * Slept for one hour tonight. Not a very productive day today. 
  * 
  * 03/04/2021
  * Next feature is going to be parsing HTML for keywords.
